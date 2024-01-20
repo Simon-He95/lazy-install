@@ -3,6 +3,7 @@
 </p>
 <p align="center"> English | <a href="./README_zh.md">简体中文</a></p>
 
+When you want to use other libraries to implement it, I need to often copy the use case in the library, and then I have to enter from the command line to install this dependency. I think it's a little troublesome. I hope this library can monitor my import statement and add a button to the head to help me install the dependency directly after clicking, so that I don't have to copy and paste anymore.
 
 ## :coffee:
 
