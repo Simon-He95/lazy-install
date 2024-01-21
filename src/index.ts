@@ -18,14 +18,14 @@ export async function activate(context: ExtensionContext) {
       terminal = createTerminal('lazy-install')
     const installWay = getConfiguration('lazy-install.way')
     const currentFileUrl = getCurrentFileUrl()! as string
-    const isInworkspace = workspace
+    const isInWorkspace = workspace
       ? workspace.some((w: string) => currentFileUrl.indexOf(w))
       : false
     terminal.show()
     terminal.processId.then(() => {
       setTimeout(() => {
         // 考虑在monorepo子仓下安装, 需要补充 -w
-        terminal.sendText(`${installWay} ${name} ${isInworkspace ? '-w' : ''}`)
+        terminal.sendText(`${installWay} ${name} ${isInWorkspace ? '-w' : ''}`)
       }, 800)
     })
   }))
