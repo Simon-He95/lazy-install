@@ -5,6 +5,21 @@
 
 When you want to use other libraries to implement it, I need to often copy the use case in the library, and then I have to enter from the command line to install this dependency. I think it's a little troublesome. I hope this library can monitor my import statement and add a button to the head to help me install the dependency directly after clicking, so that I don't have to copy and paste anymore.
 
+## Config
+```json
+"configuration": {
+      "type": "object",
+      "title": "lazy-install",
+      "properties": {
+        "lazy-install.way": {
+          "type": "string",
+          "default": "ni",
+          "description": "Choose how to install it, such as ni, npm, pnpm, yarn, default: ni"
+        }
+      }
+    }
+```
+
 ## :coffee:
 
 [buy me a cup of coffee](https://github.com/Simon-He95/sponsor)
