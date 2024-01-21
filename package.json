@@ -33,6 +33,19 @@
   "activationEvents": [
     "onStartupFinished"
   ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "lazy-install",
+      "properties": {
+        "lazy-install.way": {
+          "type": "string",
+          "default": "ni",
+          "description": "Choose how to install it, such as ni, npm, pnpm, yarn, default: ni"
+        }
+      }
+    }
+  },
   "scripts": {
     "dev": "pnpm build --watch",
     "test": "vitest",
@@ -48,7 +61,7 @@
     "@simon_he/eslint-config": "^0.0.6",
     "@types/node": "^18.18.12",
     "@types/vscode": "^1.84.2",
-    "@vscode-use/utils": "^0.0.80",
+    "@vscode-use/utils": "^0.0.81",
     "bumpp": "^9.2.0",
     "eslint": "^8.54.0",
     "esno": "^0.16.3",
@@ -58,6 +71,7 @@
     "typescript": "^5.3.2",
     "vite": "^4.5.0",
     "vitest": "^0.29.8",
-    "vsce": "^2.15.0"
+    "vsce": "^2.15.0",
+    "yamljs": "^0.3.0"
   }
 }
