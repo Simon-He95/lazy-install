@@ -2,9 +2,9 @@ import { addEventListener, createTerminal, getConfiguration, getCurrentFileUrl, 
 import type { Disposable, ExtensionContext, Terminal } from 'vscode'
 import { detectModule, getPnpmWorkspace } from './utils'
 
+export const pnpmWorkspace = getPnpmWorkspace()
 export async function activate(context: ExtensionContext) {
   const disposes: Disposable[] = []
-  const workspace = getPnpmWorkspace()
   detectModule()
 
   disposes.push(addEventListener('text-change', () => detectModule()))
@@ -18,8 +18,8 @@ export async function activate(context: ExtensionContext) {
       terminal = createTerminal('lazy-install')
     const installWay = getConfiguration('lazy-install.way')
     const currentFileUrl = getCurrentFileUrl()! as string
-    const isInWorkspace = workspace
-      ? workspace.some((w: string) => currentFileUrl.indexOf(w))
+    const isInWorkspace = pnpmWorkspace
+      ? pnpmWorkspace.some((w: string) => currentFileUrl.indexOf(w))
       : false
     terminal.show()
     terminal.processId.then(() => {

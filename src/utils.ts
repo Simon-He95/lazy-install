@@ -1,20 +1,22 @@
 import fs from 'node:fs'
 import { resolve } from 'node:path'
-import { createCodeLens, createRange, getActiveText, getPosition, getRootPath, registerCodeLensProvider } from '@vscode-use/utils'
+import { createCodeLens, createRange, getActiveText, getCurrentFileUrl, getPosition, getRootPath, registerCodeLensProvider } from '@vscode-use/utils'
 import type { Disposable } from 'vscode'
+import { findUpSync } from 'find-up'
+import { pnpmWorkspace } from '.'
 
 const YAML = require('yamljs')
 
 let dispose: Disposable
 
-export function createInstallCodeLensProvider(moduels: any[]) {
+export function createInstallCodeLensProvider(modules: any[]) {
   if (dispose)
     dispose.dispose()
 
   dispose = registerCodeLensProvider(['typescript', 'javascript', 'vue', 'typescriptreact', 'javascriptreact'], {
     provideCodeLenses() {
       const codeLens: any[] = []
-      moduels.forEach((module) => {
+      modules.forEach((module) => {
         // const {range,}
         const [name, index] = module
         const position = getPosition(index)
@@ -38,8 +40,10 @@ export function createInstallCodeLensProvider(moduels: any[]) {
   })
 }
 
+const projectUrl = getRootPath()
 export function getPnpmWorkspace() {
-  const projectUrl = getRootPath()!
+  if (!projectUrl)
+    return
   const workspace = resolve(projectUrl, 'pnpm-workspace.yaml')
   if (!fs.existsSync(workspace))
     return
@@ -51,11 +55,12 @@ export function getPnpmWorkspace() {
 
 const IMPORT_REF = /from ['"]([^'"]+)['"]/g
 const isNodeModules = /^(@\/|\.|\~|\/)/
-const filters = [/^vscode$/, /^node:/, /^(fs|process)$/]
+const filters = [/^vscode$/, /^node:/, /^(fs|process)$/, /^virtual:/]
 export function detectModule() {
   // 检测文本变化
   const code = getActiveText()!
   const modules: any[] = []
+  const deps = getCurrentPkg()
   for (const matcher of code.matchAll(IMPORT_REF)) {
     const source = matcher[1]
     if (isNodeModules.test(source))
@@ -65,8 +70,32 @@ export function detectModule() {
       ? source.split('/').slice(0, 2).join('/')
       : source
     const index = matcher.index
-    if (!filters.some(r => r.test(name)))
+    if (!deps.includes(name) && !filters.some(r => r.test(name)))
       modules.push([name, index])
   }
   createInstallCodeLensProvider(modules)
+}
+
+export function getCurrentPkg() {
+  const pkg = findUpSync('package.json', {
+    cwd: getCurrentFileUrl()! as string,
+  })
+  if (!pkg)
+    return []
+  const base = getDeps(pkg)
+  if (pnpmWorkspace) {
+    const url = resolve(projectUrl!, 'package.json')
+    if (fs.existsSync(url)) {
+      const rootBase = getDeps(url) || []
+      return [...rootBase, ...base || []]
+    }
+  }
+  return base
+}
+
+function getDeps(url: string) {
+  if (!fs.existsSync(url))
+    return []
+  const obj = JSON.parse(fs.readFileSync(url, 'utf-8'))
+  return Object.keys(Object.assign({}, obj.dependencies, obj.devDependencies))
 }
