@@ -51,6 +51,7 @@ export function getPnpmWorkspace() {
 
 const IMPORT_REF = /from ['"]([^'"]+)['"]/g
 const isNodeModules = /^(@\/|\.|\~|\/)/
+const filters = [/^vscode$/, /^node:/, /^(fs|process)$/]
 export function detectModule() {
   // 检测文本变化
   const code = getActiveText()!
@@ -64,7 +65,8 @@ export function detectModule() {
       ? source.split('/').slice(0, 2).join('/')
       : source
     const index = matcher.index
-    modules.push([name, index])
+    if (!filters.some(r => r.test(name)))
+      modules.push([name, index])
   }
   createInstallCodeLensProvider(modules)
 }
