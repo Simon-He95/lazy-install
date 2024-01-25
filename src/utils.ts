@@ -1,44 +1,10 @@
 import fs from 'node:fs'
 import { resolve } from 'node:path'
 import { createCodeLens, createRange, getActiveText, getCurrentFileUrl, getPosition, getRootPath, registerCodeLensProvider } from '@vscode-use/utils'
-import type { Disposable } from 'vscode'
 import { findUpSync } from 'find-up'
 import { pnpmWorkspace } from '.'
 
 const YAML = require('yamljs')
-
-let dispose: Disposable
-
-export function createInstallCodeLensProvider(modules: any[]) {
-  if (dispose)
-    dispose.dispose()
-
-  dispose = registerCodeLensProvider(['typescript', 'javascript', 'vue', 'typescriptreact', 'javascriptreact'], {
-    provideCodeLenses() {
-      const codeLens: any[] = []
-      modules.forEach((module) => {
-        // const {range,}
-        const [name, index] = module
-        const position = getPosition(index)
-        const range = createRange(position.line, position.column, position.line, position.column)
-        codeLens.push(createCodeLens(range, {
-          command: 'lazy-install.install',
-          title: name,
-          tooltip: name,
-          arguments: [range, name],
-        }))
-        const _name = `${name} -D`
-        codeLens.push(createCodeLens(range, {
-          command: 'lazy-install.install',
-          title: _name,
-          tooltip: name,
-          arguments: [range, _name],
-        }))
-      })
-      return codeLens
-    },
-  })
-}
 
 const projectUrl = getRootPath()
 export function getPnpmWorkspace() {
@@ -54,26 +20,29 @@ export function getPnpmWorkspace() {
 }
 
 const IMPORT_REF = /from ['"]([^'"]+)['"]/g
-const isNodeModules = /^(@\/|\.|\~|\/)/
-const filters = [/^vscode$/, /^node:/, /^(fs|process)$/, /^virtual:/]
+const isNodeModules = /^(\w|@\w)/
+const filters = [/^vscode$/, /^node:/, /^(fs|process)$/, /^virtual:/, /^path$/, /^assert$/]
+const modules: any = {
+  data: [],
+}
 export function detectModule() {
   // 检测文本变化
   const code = getActiveText()!
-  const modules: any[] = []
+  const data: any[] = []
   const deps = getCurrentPkg()
   for (const matcher of code.matchAll(IMPORT_REF)) {
     const source = matcher[1]
-    if (isNodeModules.test(source))
+    if (!isNodeModules.test(source))
       continue
 
     const name = source.startsWith('@')
       ? source.split('/').slice(0, 2).join('/')
-      : source
+      : source.split('/')[0]
     const index = matcher.index
     if (!deps.includes(name) && !filters.some(r => r.test(name)))
-      modules.push([name, index])
+      data.push([name, index])
   }
-  createInstallCodeLensProvider(modules)
+  modules.data = data
 }
 
 export function getCurrentPkg() {
@@ -98,4 +67,33 @@ function getDeps(url: string) {
     return []
   const obj = JSON.parse(fs.readFileSync(url, 'utf-8'))
   return Object.keys(Object.assign({}, obj.dependencies, obj.devDependencies))
+}
+
+export function createInstallCodeLensProvider() {
+  return registerCodeLensProvider(['typescript', 'javascript', 'vue', 'typescriptreact', 'javascriptreact'], {
+    provideCodeLenses() {
+      const codeLens: any[] = []
+      const data = modules.data
+      data.forEach((module: any) => {
+        // const {range,}
+        const [name, index] = module
+        const position = getPosition(index)
+        const range = createRange(position.line, position.column, position.line, position.column)
+        codeLens.push(createCodeLens(range, {
+          command: 'lazy-install.install',
+          title: name,
+          tooltip: name,
+          arguments: [range, name],
+        }))
+        const _name = `${name} -D`
+        codeLens.push(createCodeLens(range, {
+          command: 'lazy-install.install',
+          title: _name,
+          tooltip: name,
+          arguments: [range, _name],
+        }))
+      })
+      return codeLens
+    },
+  })
 }

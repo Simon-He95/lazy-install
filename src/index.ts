@@ -1,12 +1,12 @@
 import { addEventListener, createTerminal, getConfiguration, getCurrentFileUrl, registerCommand } from '@vscode-use/utils'
 import type { Disposable, ExtensionContext, Terminal } from 'vscode'
-import { detectModule, getPnpmWorkspace } from './utils'
+import { createInstallCodeLensProvider, detectModule, getPnpmWorkspace } from './utils'
 
 export const pnpmWorkspace = getPnpmWorkspace()
 export async function activate(context: ExtensionContext) {
   const disposes: Disposable[] = []
   detectModule()
-
+  disposes.push(createInstallCodeLensProvider())
   disposes.push(addEventListener('text-change', () => detectModule()))
   disposes.push(addEventListener('activeText-change', () => detectModule()))
 
