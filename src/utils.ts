@@ -27,7 +27,9 @@ const modules: any = {
 }
 export function detectModule() {
   // 检测文本变化
-  const code = getActiveText()!
+  const code = getActiveText()
+  if (!code)
+    return
   const data: any[] = []
   const deps = getCurrentPkg()
   for (const matcher of code.matchAll(IMPORT_REF)) {
