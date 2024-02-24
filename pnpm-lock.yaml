@@ -18,8 +18,8 @@ importers:
         specifier: ^1.84.2
         version: 1.84.2
       '@vscode-use/utils':
-        specifier: ^0.0.81
-        version: 0.0.81
+        specifier: ^0.0.84
+        version: 0.0.84
       bumpp:
         specifier: ^9.2.0
         version: 9.2.0
@@ -914,8 +914,8 @@ packages:
       pretty-format: 27.5.1
     dev: true
 
-  /@vscode-use/utils@0.0.81:
-    resolution: {integrity: sha512-Yp/ufCHNPtFgCeiezzQlXkr02njq2auiCElKZ3Z7DaGedop8uJS3IAHnKj482pWrs0eevnx+mSda9zbTO6x38g==}
+  /@vscode-use/utils@0.0.84:
+    resolution: {integrity: sha512-k24PPINluO+WKVG9049DCWGMpxT8MrgdG07VgtfE6vfj+GtDSdptpzn+LcCqfMnkBvbz67TSiBFxNsmwWg/fZg==}
     engines: {vscode: ^1.77.0}
     dev: true
 
