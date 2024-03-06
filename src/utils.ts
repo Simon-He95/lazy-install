@@ -67,8 +67,12 @@ export function getCurrentPkg() {
 function getDeps(url: string) {
   if (!fs.existsSync(url))
     return []
-  const obj = JSON.parse(fs.readFileSync(url, 'utf-8'))
-  return Object.keys(Object.assign({}, obj.dependencies, obj.devDependencies))
+  try {
+    const obj = JSON.parse(fs.readFileSync(url, 'utf-8'))
+    return Object.keys(Object.assign({}, obj.dependencies, obj.devDependencies))
+  } catch (error) {
+    return []
+  }
 }
 
 export function createInstallCodeLensProvider() {
