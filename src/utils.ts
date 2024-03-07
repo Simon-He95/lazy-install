@@ -19,7 +19,7 @@ export function getPnpmWorkspace() {
   return packages
 }
 
-const IMPORT_REF = /from ['"]([^'"]+)['"]/g
+const IMPORT_REF = /^\s*import.*from ['"]([^'"]+)['"]/gm
 const isNodeModules = /^(\w|@\w)/
 const filters = [/^vscode$/, /^node:/, /^(fs|process)$/, /^virtual:/, /^path$/, /^assert$/]
 const modules: any = {
@@ -70,7 +70,8 @@ function getDeps(url: string) {
   try {
     const obj = JSON.parse(fs.readFileSync(url, 'utf-8'))
     return Object.keys(Object.assign({}, obj.dependencies, obj.devDependencies))
-  } catch (error) {
+  }
+  catch (error) {
     return []
   }
 }
