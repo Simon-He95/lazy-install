@@ -2,7 +2,7 @@
   "publisher": "simonhe",
   "name": "lazy-install",
   "displayName": "lazy-install",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "packageManager": "pnpm@8.15.9",
   "description": "lazy-install",
   "author": "Simon He <https://github.com/Simon-He95>",
