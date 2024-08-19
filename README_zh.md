@@ -7,17 +7,19 @@
 
 ## Config
 ```json
-"configuration": {
-      "type": "object",
-      "title": "lazy-install",
-      "properties": {
-        "lazy-install.way": {
-          "type": "string",
-          "default": "ni",
-          "description": "Choose how to install it, such as ni, npm, pnpm, yarn, default: ni"
-        }
+{
+  "configuration": {
+    "type": "object",
+    "title": "lazy-install",
+    "properties": {
+      "lazy-install.way": {
+        "type": "string",
+        "default": "ni",
+        "description": "Choose how to install it, such as ni, npm, pnpm, yarn, default: ni"
       }
     }
+  }
+}
 ```
 
 ## :coffee:

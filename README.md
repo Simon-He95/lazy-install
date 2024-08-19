@@ -7,17 +7,19 @@ When you want to use other libraries to implement it, I need to often copy the u
 
 ## Config
 ```json
-"configuration": {
-      "type": "object",
-      "title": "lazy-install",
-      "properties": {
-        "lazy-install.way": {
-          "type": "string",
-          "default": "ni",
-          "description": "Choose how to install it, such as ni, npm, pnpm, yarn, default: ni"
-        }
+{
+  "configuration": {
+    "type": "object",
+    "title": "lazy-install",
+    "properties": {
+      "lazy-install.way": {
+        "type": "string",
+        "default": "ni",
+        "description": "Choose how to install it, such as ni, npm, pnpm, yarn, default: ni"
       }
     }
+  }
+}
 ```
 
 ## :coffee:
