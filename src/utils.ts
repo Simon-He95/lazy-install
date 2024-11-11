@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import { resolve } from 'node:path'
 import { createCodeLens, createRange, getActiveText, getCurrentFileUrl, getPosition, getRootPath, registerCodeLensProvider } from '@vscode-use/utils'
 import { findUpSync } from 'find-up'
+import { jsShell } from 'lazy-js-utils/dist/node'
 import { pnpmWorkspace } from '.'
 
 const YAML = require('yamljs')
@@ -82,6 +83,11 @@ export function createInstallCodeLensProvider() {
     provideCodeLenses() {
       const codeLens: any[] = []
       const data = modules.data
+        .filter(([name]: any) => {
+          const { status } = jsShell(`npm view ${name}`)
+          return status === 0
+        })
+      // 过滤非 npm 上可搜索到的包
       data.forEach((module: any) => {
         // const {range,}
         const [name, index] = module

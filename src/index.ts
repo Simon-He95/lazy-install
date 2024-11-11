@@ -4,13 +4,19 @@ import { createInstallCodeLensProvider, detectModule, getPnpmWorkspace } from '.
 
 export const pnpmWorkspace = getPnpmWorkspace()
 let terminal: Terminal
+let timer: any = null
+
 export async function activate(context: ExtensionContext) {
   const disposes: Disposable[] = []
+  let preInstallName = ''
   detectModule()
   disposes.push(createInstallCodeLensProvider())
   disposes.push(addEventListener('text-change', detectModule))
   disposes.push(addEventListener('activeText-change', detectModule))
   disposes.push(registerCommand('lazy-install.install', (_, name: string) => {
+    if (preInstallName && preInstallName === name)
+      return
+    preInstallName = name
     // 考虑复用terminal
     if (!terminal)
       terminal = createTerminal('lazy-install', {})
@@ -23,7 +29,9 @@ export async function activate(context: ExtensionContext) {
       : false
     terminal.show()
     terminal.processId.then(() => {
-      setTimeout(() => {
+      if (timer)
+        clearInterval(timer)
+      timer = setTimeout(() => {
         // 考虑在monorepo子仓下安装, 需要补充 -w
         terminal.sendText(`${installWay} ${name} ${isInWorkspace ? '-w' : ''}`, true)
         detectModule()
