@@ -1,12 +1,11 @@
-import { addEventListener, createTerminal, getConfiguration, getCurrentFileUrl, registerCommand } from '@vscode-use/utils'
-import type { Disposable, ExtensionContext, Terminal } from 'vscode'
-import { createInstallCodeLensProvider, detectModule, getPnpmWorkspace } from './utils'
+import { addEventListener, createExtension, createTerminal, getConfiguration, getCurrentFileUrl, registerCommand } from '@vscode-use/utils'
+import type { Disposable, Terminal } from 'vscode'
+import { createInstallCodeLensProvider, detectModule, pnpmWorkspace } from './utils'
 
-export const pnpmWorkspace = getPnpmWorkspace()
 let terminal: Terminal
 let timer: any = null
 
-export async function activate(context: ExtensionContext) {
+export= createExtension(() => {
   const disposes: Disposable[] = []
   let preInstallName = ''
   detectModule()
@@ -38,10 +37,7 @@ export async function activate(context: ExtensionContext) {
       }, 800)
     })
   }))
-
-  context.subscriptions.push(...disposes)
-}
-
-export function deactivate() {
+  return disposes
+}, () => {
   terminal?.dispose()
-}
+})
