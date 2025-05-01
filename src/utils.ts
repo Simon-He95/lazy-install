@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import { resolve } from 'node:path'
 import { createCodeLens, createRange, getActiveText, getCurrentFileUrl, getPosition, getRootPath, registerCodeLensProvider } from '@vscode-use/utils'
 import { findUpSync } from 'find-up'
-import { jsShell } from 'lazy-js-utils/dist/node'
+import { jsShell } from 'lazy-js-utils/node'
 
 export const pnpmWorkspace = getPnpmWorkspace()
 const YAML = require('yamljs')

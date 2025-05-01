@@ -6,16 +6,11 @@ let terminal: Terminal
 let timer: any = null
 
 export= createExtension(() => {
-  const disposes: Disposable[] = []
-  let preInstallName = ''
   detectModule()
-  disposes.push(createInstallCodeLensProvider())
-  disposes.push(addEventListener('text-change', detectModule))
-  disposes.push(addEventListener('activeText-change', detectModule))
-  disposes.push(registerCommand('lazy-install.install', (_, name: string) => {
-    if (preInstallName && preInstallName === name)
-      return
-    preInstallName = name
+  createInstallCodeLensProvider()
+  addEventListener('text-change', detectModule)
+  addEventListener('activeText-change', detectModule)
+  registerCommand('lazy-install.install', (_, name: string) => {
     // 考虑复用terminal
     if (!terminal)
       terminal = createTerminal('lazy-install', {})
@@ -36,8 +31,7 @@ export= createExtension(() => {
         detectModule()
       }, 800)
     })
-  }))
-  return disposes
+  })
 }, () => {
   terminal?.dispose()
 })
