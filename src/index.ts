@@ -1,18 +1,20 @@
 import { addEventListener, createExtension, createTerminal, getConfiguration, getCurrentFileUrl, registerCommand } from '@vscode-use/utils'
-import type { Disposable, Terminal } from 'vscode'
+import type { Terminal } from 'vscode'
 import { createInstallCodeLensProvider, detectModule, pnpmWorkspace } from './utils'
+import { getAlias } from './alias'
 
 let terminal: Terminal
 let timer: any = null
 
-export= createExtension(() => {
+export= createExtension(async () => {
+  await getAlias()
   detectModule()
   createInstallCodeLensProvider()
   addEventListener('text-change', detectModule)
   addEventListener('activeText-change', detectModule)
   registerCommand('lazy-install.install', (_, name: string) => {
     // 考虑复用terminal
-    if (!terminal)
+    if (!terminal || terminal.exitStatus)
       terminal = createTerminal('lazy-install', {})
     const installWay = getConfiguration('lazy-install.way')
     const currentFileUrl = getCurrentFileUrl()!

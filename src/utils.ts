@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { createCodeLens, createRange, getActiveText, getCurrentFileUrl, getPosition, getRootPath, registerCodeLensProvider } from '@vscode-use/utils'
 import { findUpSync } from 'find-up'
 import { jsShell } from 'lazy-js-utils/node'
+import { aliasMap } from './alias'
 
 export const pnpmWorkspace = getPnpmWorkspace()
 const YAML = require('yamljs')
@@ -33,6 +34,7 @@ export function detectModule() {
     return
   const data: any[] = []
   const deps = getCurrentPkg()
+  const aliasKeys = Array.from(aliasMap.values()).reduce((r, c) => [...r, ...Object.keys(c)], [])
   for (const matcher of code.matchAll(IMPORT_REF)) {
     const source = matcher[1]
     if (!isNodeModules.test(source))
@@ -42,6 +44,8 @@ export function detectModule() {
       ? source.split('/').slice(0, 2).join('/')
       : source.split('/')[0]
     const index = matcher.index
+    if (aliasKeys.some((key: string) => name.startsWith(key)))
+      continue
     if (!deps.includes(name) && !filters.some(r => r.test(name)))
       data.push([name, index])
   }
