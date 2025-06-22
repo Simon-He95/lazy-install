@@ -1,7 +1,7 @@
-import { addEventListener, createExtension, createTerminal, getConfiguration, getCurrentFileUrl, registerCommand } from '@vscode-use/utils'
 import type { Terminal } from 'vscode'
-import { createInstallCodeLensProvider, detectModule, pnpmWorkspace } from './utils'
+import { addEventListener, createExtension, createTerminal, getConfiguration, getCurrentFileUrl, registerCommand } from '@vscode-use/utils'
 import { getAlias } from './alias'
+import { createInstallCodeLensProvider, detectModule, pnpmWorkspace } from './utils'
 
 let terminal: Terminal
 let timer: any = null

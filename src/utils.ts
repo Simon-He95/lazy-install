@@ -23,7 +23,45 @@ export function getPnpmWorkspace() {
 
 const IMPORT_REF = /^\s*import.*from ['"]([^'"]+)['"]/gm
 const isNodeModules = /^(?:\w|@\w)/
-const filters = [/^vscode$/, /^node:/, /^(fs|process)$/, /^virtual:/, /^path$/, /^assert$/]
+const filters = [
+  /^vscode$/,
+  /^node:/,
+  /^(fs|process)$/,
+  /^virtual:/,
+  /^path$/,
+  /^assert$/,
+  /^util$/,
+  /^os$/,
+  /^crypto$/,
+  /^events$/,
+  /^stream$/,
+  /^http$/,
+  /^https$/,
+  /^url$/,
+  /^querystring$/,
+  /^buffer$/,
+  /^child_process$/,
+  /^cluster$/,
+  /^dgram$/,
+  /^dns$/,
+  /^domain$/,
+  /^net$/,
+  /^readline$/,
+  /^repl$/,
+  /^string_decoder$/,
+  /^timers$/,
+  /^tls$/,
+  /^tty$/,
+  /^vm$/,
+  /^zlib$/,
+  /^punycode$/,
+  /^v8$/,
+  /^worker_threads$/,
+  /^perf_hooks$/,
+  /^async_hooks$/,
+  /^inspector$/,
+  /^trace_events$/,
+]
 const modules: any = {
   data: [],
 }

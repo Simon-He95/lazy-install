@@ -1,7 +1,6 @@
-// @ts-check
-const simon_he = require('@antfu/eslint-config').default
+import simon_he from '@antfu/eslint-config'
 
-module.exports = simon_he({
+export default simon_he({
   rules: {
     'ts/no-var-requires': 'off',
     'ts/no-require-imports': 'off',
