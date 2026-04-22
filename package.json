@@ -2,7 +2,7 @@
   "publisher": "simonhe",
   "name": "lazy-install",
   "displayName": "Lazy Install - Auto Install Missing Packages",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "packageManager": "pnpm@8.15.9",
   "description": "VS Code extension that detects missing npm packages from import statements and installs them with one click using npm, pnpm, yarn, or ni.",
   "author": "Simon He <https://github.com/Simon-He95>",
