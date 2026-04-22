@@ -1,23 +1,42 @@
-import type { Terminal } from 'vscode'
+import type { FileSystemWatcher, Terminal } from 'vscode'
 import { addEventListener, createExtension, createTerminal, getConfiguration, registerCommand } from '@vscode-use/utils'
-import { getAlias } from './alias'
+import { workspace } from 'vscode'
+import { clearAliasCache } from './alias'
 import { buildInstallCommand } from './core'
-import { createInstallCodeLensProvider, detectModule, getCurrentPackageDir } from './utils'
+import { createInstallCodeLensProvider, getCurrentPackageDir, refreshCodeLenses } from './utils'
 
 let terminal: Terminal
 let terminalCwd: string | undefined
 let timer: ReturnType<typeof setTimeout> | null = null
+let watchers: FileSystemWatcher[] = []
 
-async function refreshModules() {
-  await getAlias()
-  detectModule()
+function refreshModules() {
+  refreshCodeLenses()
+}
+
+function refreshConfig() {
+  clearAliasCache()
+  refreshCodeLenses()
 }
 
 export= createExtension(async () => {
-  await refreshModules()
+  refreshModules()
   createInstallCodeLensProvider()
-  addEventListener('text-change', refreshModules)
   addEventListener('activeText-change', refreshModules)
+  watchers = [
+    workspace.createFileSystemWatcher('**/package.json'),
+    workspace.createFileSystemWatcher('**/tsconfig.json'),
+    workspace.createFileSystemWatcher('**/jsconfig.json'),
+    workspace.createFileSystemWatcher('**/pnpm-workspace.yaml'),
+  ]
+  watchers[0].onDidChange(refreshModules)
+  watchers[0].onDidCreate(refreshModules)
+  watchers[0].onDidDelete(refreshModules)
+  for (const watcher of watchers.slice(1)) {
+    watcher.onDidChange(refreshConfig)
+    watcher.onDidCreate(refreshConfig)
+    watcher.onDidDelete(refreshConfig)
+  }
   registerCommand('lazy-install.install', (_, name: string) => {
     const currentPackageDir = getCurrentPackageDir()
     if (!currentPackageDir)
@@ -38,10 +57,11 @@ export= createExtension(async () => {
         clearTimeout(timer)
       timer = setTimeout(() => {
         terminal.sendText(command, true)
-        void refreshModules()
       }, 800)
     })
   })
 }, () => {
+  watchers.forEach(watcher => watcher.dispose())
+  watchers = []
   terminal?.dispose()
 })

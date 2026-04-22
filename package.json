@@ -1,10 +1,10 @@
 {
   "publisher": "simonhe",
   "name": "lazy-install",
-  "displayName": "Lazy Install - Smart Package Installer",
+  "displayName": "Lazy Install - Auto Install Missing Packages",
   "version": "0.0.13",
   "packageManager": "pnpm@8.15.9",
-  "description": "🚀 Automatically detect and install npm packages with one click! No more copy-pasting or switching to terminal. Just import and install instantly.",
+  "description": "VS Code extension that detects missing npm packages from import statements and installs them with one click using npm, pnpm, yarn, or ni.",
   "author": "Simon He <https://github.com/Simon-He95>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/Simon-He95",
@@ -21,20 +21,32 @@
   },
   "keywords": [
     "npm",
+    "pnpm",
+    "yarn",
+    "ni",
     "package",
+    "packages",
+    "dependency",
+    "dependencies",
+    "missing-packages",
+    "missing-dependencies",
     "install",
     "auto-install",
-    "productivity",
-    "developer-tools",
-    "vscode-extension",
+    "one-click-install",
+    "import",
+    "codelens",
+    "monorepo",
+    "workspace",
     "javascript",
     "typescript",
+    "react",
+    "vue",
     "node",
-    "dependencies",
-    "lazy",
-    "one-click"
+    "vscode",
+    "vscode-extension"
   ],
   "categories": [
+    "Programming Languages",
     "Other"
   ],
   "main": "./dist/index.js",
@@ -43,7 +55,11 @@
     "vscode": "^1.95.0"
   },
   "activationEvents": [
-    "onStartupFinished"
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact",
+    "onLanguage:vue"
   ],
   "contributes": {
     "configuration": {
@@ -53,6 +69,12 @@
         "lazy-install.way": {
           "type": "string",
           "default": "ni",
+          "enum": [
+            "ni",
+            "npm",
+            "pnpm",
+            "yarn"
+          ],
           "description": "Choose how to install it, such as ni, npm, pnpm, yarn, default: ni"
         }
       }

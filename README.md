@@ -5,7 +5,7 @@
 <h1 align="center">🚀 Lazy Install</h1>
 
 <p align="center">
-  <strong>Smart Package Installer for VS Code</strong>
+  <strong>VS Code extension to auto install missing npm packages from import statements</strong>
 </p>
 
 <p align="center">
@@ -22,39 +22,39 @@
 
 <p align="center"> English | <a href="./README_zh.md">简体中文</a></p>
 
+<p align="center">
+  Lazy Install detects missing dependencies in JavaScript, TypeScript, React, and Vue files, then lets you install them with one click via npm, pnpm, yarn, or ni.
+</p>
+
 ---
 
-## ✨ Why Lazy Install?
+## ✨ Why Lazy Install for VS Code?
 
 **Stop the tedious workflow!** 🛑
 
 ❌ **Before**: Import → Copy package name → Switch to terminal → Type install command → Wait → Switch back to editor
 ✅ **After**: Import → Click install button → Done! 🎉
 
-Lazy Install automatically detects uninstalled packages in your import statements and provides **one-click installation buttons** right in your editor. No more context switching, no more copy-pasting!
+Lazy Install automatically detects uninstalled packages in `import`, `export from`, `require()`, and `import()` statements, then provides **one-click install buttons** directly in the editor. No more terminal switching or copy-pasting package names.
 
 ## 🎯 Features
 
-- 🔍 **Smart Detection**: Automatically scans your import statements
-- ⚡ **One-Click Install**: Install packages instantly with CodeLens buttons
+- 🔍 **Missing Package Detection**: Automatically scans import statements for dependencies that are not installed yet
+- ⚡ **One-Click Install**: Install npm packages instantly with inline CodeLens actions
 - 🛠️ **Multiple Package Managers**: Supports npm, pnpm, yarn, and ni
-- 📦 **Dev Dependencies**: Choose between regular or dev dependencies
-- 🚀 **Zero Configuration**: Works out of the box
-- 🎨 **Clean UI**: Non-intrusive inline buttons
-- 🔧 **Workspace Support**: Handles monorepos and workspaces
-
-## 🎬 Demo
-
-![Demo GIF](./assets/demo.gif)
+- 🧩 **Common Import Forms**: Supports `import`, `export from`, `require()`, and `import()`
+- 📦 **Dev Dependencies**: Choose between regular dependencies and dev dependencies
+- 🔧 **Monorepo Support**: Works with pnpm workspaces and `package.json` workspaces
+- 🚀 **Zero Configuration**: Works out of the box for JavaScript, TypeScript, React, and Vue projects
 
 *Just import and click - it's that simple!*
 
 ## 🚀 Quick Start
 
 1. **Install** the extension from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=simonhe.lazy-install)
-2. **Write** your import statement: `import axios from 'axios'`
-3. **Click** the install button that appears inline
-4. **Done!** Package installed and ready to use
+2. **Write** a missing import such as `import axios from 'axios'`
+3. **Click** the inline install button above the import
+4. **Done!** The missing dependency is installed and ready to use
 
 ## ⚙️ Configuration
 
@@ -83,8 +83,22 @@ Customize your package manager in VS Code settings:
 
 - **Regular Dependency**: Click the package name button
 - **Dev Dependency**: Click the "package-name -D" button
-- **Multiple Packages**: Install multiple packages in one go
-- **Monorepos**: Automatically detects workspace configuration
+- **Common Import Styles**: Works with `import`, `require()`, and `import()`
+- **Monorepos**: Detects pnpm workspaces and `package.json` workspaces
+
+## ❓ FAQ
+
+### Does Lazy Install work with monorepos?
+
+Yes. It detects pnpm workspaces and `package.json` workspaces, then installs dependencies in the current package instead of always using the repository root.
+
+### Which import styles are supported?
+
+Lazy Install detects packages referenced by `import`, `export from`, `require()`, and `import()` syntax in supported files.
+
+### Can I install dev dependencies?
+
+Yes. Each missing package gets both a regular install action and a `-D` install action in the CodeLens UI.
 
 ## 🤝 Contributing
 

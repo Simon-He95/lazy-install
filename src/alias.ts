@@ -1,49 +1,51 @@
 import { existsSync, promises, statSync } from 'node:fs'
 import path, { resolve } from 'node:path'
-import { getCurrentFileUrl, getRootPath } from '@vscode-use/utils/index'
+import { getCurrentFileUrl } from '@vscode-use/utils/index'
 import { findUp } from 'find-up'
 import { isArray, toArray, useJSONParse } from 'lazy-js-utils'
 
-// 获取当前package.json下的配置
-export const aliasMap = new Map()
-let currentAlias: Record<string, string> = {}
+type AliasValue = Record<string, string>
 
-export function getCurrentAliasKeys() {
-  return Object.keys(currentAlias)
+// 获取当前package.json下的配置
+export const aliasMap = new Map<string, { mtimeMs: number, value: AliasValue }>()
+const workspaceMap = new Map<string, string | undefined>()
+
+export function clearAliasCache() {
+  aliasMap.clear()
+  workspaceMap.clear()
 }
 
-export async function getAlias(configUrl?: string, visited = new Set<string>()) {
-  const isCurrentConfig = !configUrl
-  let configPath = configUrl
-  if (!configPath) {
-    const currentWorkspaceUrl = await getCurrentWorkspaceUrl()
-    if (!currentWorkspaceUrl)
-      return
-    configPath = resolve(currentWorkspaceUrl, 'tsconfig.json')
-    if (!existsSync(configPath))
-      configPath = resolve(currentWorkspaceUrl, 'jsconfig.json')
-    if (!existsSync(configPath))
-      return
-  }
+export async function getAliasKeys(fileUrl?: string) {
+  return Object.keys(await getAliasByFile(fileUrl))
+}
 
+export async function getAliasByFile(fileUrl = getCurrentFileUrl() || undefined): Promise<AliasValue> {
+  const configPath = await getWorkspaceConfigPath(fileUrl)
+  if (!configPath)
+    return {}
+  return (await getAlias(configPath)) || {}
+}
+
+export async function getAlias(configUrl?: string, visited = new Set<string>()): Promise<AliasValue> {
+  if (!configUrl)
+    return getAliasByFile()
+
+  const configPath = configUrl
   if (visited.has(configPath))
     return {}
   visited.add(configPath)
 
   const cacheKey = configPath
-  if (aliasMap.has(cacheKey)) {
-    const cached = aliasMap.get(cacheKey)
-    if (isCurrentConfig)
-      currentAlias = cached || {}
-    return cached
-  }
-  aliasMap.set(cacheKey, undefined)
+  const cacheStat = statSync(configPath)
+  const cached = aliasMap.get(cacheKey)
+  if (cached && cached.mtimeMs === cacheStat.mtimeMs)
+    return cached.value
 
   const _config = useJSONParse(await promises.readFile(configPath, 'utf-8'))
   if (!_config)
-    return
+    return {}
 
-  const result: Record<string, string> = {}
+  const result: AliasValue = {}
 
   // 递归处理 references
   if (_config.references && Array.isArray(_config.references)) {
@@ -109,15 +111,29 @@ export async function getAlias(configUrl?: string, visited = new Set<string>()) 
     })
   }
 
-  aliasMap.set(cacheKey, result)
-  if (isCurrentConfig)
-    currentAlias = result
+  aliasMap.set(cacheKey, {
+    mtimeMs: cacheStat.mtimeMs,
+    value: result,
+  })
   return result
 }
 
-const workspaceMap = new Map()
-async function getCurrentWorkspaceUrl() {
-  const currentFileUrl = getCurrentFileUrl()!
+async function getWorkspaceConfigPath(fileUrl?: string) {
+  const currentWorkspaceUrl = await getCurrentWorkspaceUrl(fileUrl)
+  if (!currentWorkspaceUrl)
+    return
+
+  let configPath = resolve(currentWorkspaceUrl, 'tsconfig.json')
+  if (!existsSync(configPath))
+    configPath = resolve(currentWorkspaceUrl, 'jsconfig.json')
+  if (!existsSync(configPath))
+    return
+
+  return configPath
+}
+
+async function getCurrentWorkspaceUrl(fileUrl?: string) {
+  const currentFileUrl = fileUrl || getCurrentFileUrl() || undefined
   if (!currentFileUrl)
     return
 
@@ -126,7 +142,6 @@ async function getCurrentWorkspaceUrl() {
 
   const currentWorkspaceUrl = await findUp('package.json', {
     cwd: currentFileUrl,
-    stopAt: getRootPath(),
     type: 'file',
   })
   if (currentWorkspaceUrl) {

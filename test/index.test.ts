@@ -81,4 +81,23 @@ describe('detectMissingModules', () => {
       },
     ])
   })
+
+  it('ignores matches inside comments and strings', () => {
+    const code = [
+      '// require(\'fake-pkg\')',
+      'const code = "require(\'fake-pkg\')"',
+      '/*',
+      'import fake from \'fake-pkg\'',
+      'import(\'fake-pkg\')',
+      '*/',
+      'const real = require(\'axios\')',
+    ].join('\n')
+
+    expect(detectMissingModules(code, [], [])).toEqual([
+      {
+        index: code.indexOf('require(\'axios\')'),
+        name: 'axios',
+      },
+    ])
+  })
 })
