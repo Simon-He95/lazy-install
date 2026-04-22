@@ -1,36 +1,44 @@
 import type { Terminal } from 'vscode'
-import { addEventListener, createExtension, createTerminal, getConfiguration, getCurrentFileUrl, registerCommand } from '@vscode-use/utils'
+import { addEventListener, createExtension, createTerminal, getConfiguration, registerCommand } from '@vscode-use/utils'
 import { getAlias } from './alias'
-import { createInstallCodeLensProvider, detectModule, pnpmWorkspace } from './utils'
+import { buildInstallCommand } from './core'
+import { createInstallCodeLensProvider, detectModule, getCurrentPackageDir } from './utils'
 
 let terminal: Terminal
-let timer: any = null
+let terminalCwd: string | undefined
+let timer: ReturnType<typeof setTimeout> | null = null
 
-export= createExtension(async () => {
+async function refreshModules() {
   await getAlias()
   detectModule()
+}
+
+export= createExtension(async () => {
+  await refreshModules()
   createInstallCodeLensProvider()
-  addEventListener('text-change', detectModule)
-  addEventListener('activeText-change', detectModule)
+  addEventListener('text-change', refreshModules)
+  addEventListener('activeText-change', refreshModules)
   registerCommand('lazy-install.install', (_, name: string) => {
-    // 考虑复用terminal
-    if (!terminal || terminal.exitStatus)
-      terminal = createTerminal('lazy-install', {})
-    const installWay = getConfiguration('lazy-install.way')
-    const currentFileUrl = getCurrentFileUrl()!
-    if (!currentFileUrl)
+    const currentPackageDir = getCurrentPackageDir()
+    if (!currentPackageDir)
       return
-    const isInWorkspace = pnpmWorkspace
-      ? pnpmWorkspace.some((w: string) => currentFileUrl.indexOf(w))
-      : false
+
+    if (!terminal || terminal.exitStatus || terminalCwd !== currentPackageDir) {
+      terminal?.dispose()
+      terminal = createTerminal('lazy-install', { cwd: currentPackageDir })
+      terminalCwd = currentPackageDir
+    }
+
+    const installWay = getConfiguration('lazy-install.way')
+    const command = buildInstallCommand(String(installWay || ''), name)
+
     terminal.show()
     terminal.processId.then(() => {
       if (timer)
-        clearInterval(timer)
+        clearTimeout(timer)
       timer = setTimeout(() => {
-        // 考虑在monorepo子仓下安装, 需要补充 -w
-        terminal.sendText(`${installWay} ${name} ${isInWorkspace ? '-w' : ''}`, true)
-        detectModule()
+        terminal.sendText(command, true)
+        void refreshModules()
       }, 800)
     })
   })

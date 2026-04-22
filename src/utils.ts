@@ -1,12 +1,18 @@
+import type { MissingModule } from './core'
+import { execFile } from 'node:child_process'
 import fs from 'node:fs'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
+import { promisify } from 'node:util'
 import { createCodeLens, createRange, getActiveText, getCurrentFileUrl, getPosition, getRootPath, registerCodeLensProvider } from '@vscode-use/utils'
 import { findUpSync } from 'find-up'
-import { jsShell } from 'lazy-js-utils/node'
-import { aliasMap } from './alias'
+import { getCurrentAliasKeys } from './alias'
+import { detectMissingModules } from './core'
 
 export const pnpmWorkspace = getPnpmWorkspace()
 const YAML = require('yamljs')
+
+const execFileAsync = promisify(execFile)
+const packageExistsCache = new Map<string, Promise<boolean>>()
 
 const projectUrl = getRootPath()
 export function getPnpmWorkspace() {
@@ -21,48 +27,9 @@ export function getPnpmWorkspace() {
   return packages
 }
 
-const IMPORT_REF = /^\s*import.*from ['"]([^'"]+)['"]/gm
-const isNodeModules = /^(?:\w|@\w)/
-const filters = [
-  /^vscode$/,
-  /^node:/,
-  /^(fs|process)$/,
-  /^virtual:/,
-  /^path$/,
-  /^assert$/,
-  /^util$/,
-  /^os$/,
-  /^crypto$/,
-  /^events$/,
-  /^stream$/,
-  /^http$/,
-  /^https$/,
-  /^url$/,
-  /^querystring$/,
-  /^buffer$/,
-  /^child_process$/,
-  /^cluster$/,
-  /^dgram$/,
-  /^dns$/,
-  /^domain$/,
-  /^net$/,
-  /^readline$/,
-  /^repl$/,
-  /^string_decoder$/,
-  /^timers$/,
-  /^tls$/,
-  /^tty$/,
-  /^vm$/,
-  /^zlib$/,
-  /^punycode$/,
-  /^v8$/,
-  /^worker_threads$/,
-  /^perf_hooks$/,
-  /^async_hooks$/,
-  /^inspector$/,
-  /^trace_events$/,
-]
-const modules: any = {
+const modules: {
+  data: MissingModule[]
+} = {
   data: [],
 }
 export function detectModule() {
@@ -70,30 +37,26 @@ export function detectModule() {
   const code = getActiveText()
   if (!code)
     return
-  const data: any[] = []
   const deps = getCurrentPkg()
-  const aliasKeys = Array.from(aliasMap.values()).reduce((r, c) => [...r, ...Object.keys(c)], [])
-  for (const matcher of code.matchAll(IMPORT_REF)) {
-    const source = matcher[1]
-    if (!isNodeModules.test(source))
-      continue
+  const aliasKeys = getCurrentAliasKeys()
+  modules.data = detectMissingModules(code, deps, aliasKeys)
+}
 
-    const name = source.startsWith('@')
-      ? source.split('/').slice(0, 2).join('/')
-      : source.split('/')[0]
-    const index = matcher.index
-    if (aliasKeys.some((key: string) => name.startsWith(key)))
-      continue
-    if (!deps.includes(name) && !filters.some(r => r.test(name)))
-      data.push([name, index])
-  }
-  modules.data = data
+export function getCurrentPkgPath() {
+  return findUpSync('package.json', {
+    cwd: getCurrentFileUrl()! as string,
+  })
+}
+
+export function getCurrentPackageDir() {
+  const pkg = getCurrentPkgPath()
+  if (!pkg)
+    return
+  return dirname(pkg)
 }
 
 export function getCurrentPkg() {
-  const pkg = findUpSync('package.json', {
-    cwd: getCurrentFileUrl()! as string,
-  })
+  const pkg = getCurrentPkgPath()
   if (!pkg)
     return []
   const base = getDeps(pkg)
@@ -120,20 +83,26 @@ function getDeps(url: string) {
   }
 }
 
+async function packageExists(name: string) {
+  if (!packageExistsCache.has(name)) {
+    packageExistsCache.set(name, execFileAsync('npm', ['view', name, 'version'])
+      .then(() => true)
+      .catch(() => false))
+  }
+  return packageExistsCache.get(name)!
+}
+
 export function createInstallCodeLensProvider() {
   return registerCodeLensProvider(['typescript', 'javascript', 'vue', 'typescriptreact', 'javascriptreact'], {
     async provideCodeLenses() {
       const codeLens: any[] = []
-      const data = await Promise.all(modules.data.map(async (module: any) => {
-        const { status } = await jsShell(`npm view ${module.name}`)
-        if (status === 0)
+      const data = (await Promise.all(modules.data.map(async (module) => {
+        if (await packageExists(module.name))
           return module
-      })
-        .filter(Boolean))
+      }))).filter((module): module is MissingModule => Boolean(module))
       // 过滤非 npm 上可搜索到的包
-      data.forEach((module: any) => {
-        // const {range,}
-        const [name, index] = module
+      data.forEach((module) => {
+        const { index, name } = module
         const position = getPosition(index)
         const range = createRange(position.line, position.column, position.line, position.column)
         codeLens.push(createCodeLens(range, {

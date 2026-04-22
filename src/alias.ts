@@ -1,4 +1,4 @@
-import { existsSync, promises } from 'node:fs'
+import { existsSync, promises, statSync } from 'node:fs'
 import path, { resolve } from 'node:path'
 import { getCurrentFileUrl, getRootPath } from '@vscode-use/utils/index'
 import { findUp } from 'find-up'
@@ -6,7 +6,14 @@ import { isArray, toArray, useJSONParse } from 'lazy-js-utils'
 
 // 获取当前package.json下的配置
 export const aliasMap = new Map()
+let currentAlias: Record<string, string> = {}
+
+export function getCurrentAliasKeys() {
+  return Object.keys(currentAlias)
+}
+
 export async function getAlias(configUrl?: string, visited = new Set<string>()) {
+  const isCurrentConfig = !configUrl
   let configPath = configUrl
   if (!configPath) {
     const currentWorkspaceUrl = await getCurrentWorkspaceUrl()
@@ -24,8 +31,12 @@ export async function getAlias(configUrl?: string, visited = new Set<string>()) 
   visited.add(configPath)
 
   const cacheKey = configPath
-  if (aliasMap.has(cacheKey))
-    return aliasMap.get(cacheKey)
+  if (aliasMap.has(cacheKey)) {
+    const cached = aliasMap.get(cacheKey)
+    if (isCurrentConfig)
+      currentAlias = cached || {}
+    return cached
+  }
   aliasMap.set(cacheKey, undefined)
 
   const _config = useJSONParse(await promises.readFile(configPath, 'utf-8'))
@@ -39,10 +50,21 @@ export async function getAlias(configUrl?: string, visited = new Set<string>()) 
     const refPromises = _config.references
       .filter((ref: any) => ref.path)
       .map((ref: any) => {
-        const refConfigPath = resolve(path.dirname(configPath), ref.path)
-        if (existsSync(refConfigPath)) {
-          return getAlias(refConfigPath, visited)
+        let refConfigPath = resolve(path.dirname(configPath), ref.path)
+        if (!existsSync(refConfigPath))
+          return Promise.resolve({})
+        if (statSync(refConfigPath).isDirectory()) {
+          const tsConfigPath = resolve(refConfigPath, 'tsconfig.json')
+          const jsConfigPath = resolve(refConfigPath, 'jsconfig.json')
+          if (existsSync(tsConfigPath))
+            refConfigPath = tsConfigPath
+          else if (existsSync(jsConfigPath))
+            refConfigPath = jsConfigPath
+          else
+            return Promise.resolve({})
         }
+        if (existsSync(refConfigPath))
+          return getAlias(refConfigPath, visited)
         return Promise.resolve({})
       })
     const refAliases = await Promise.all(refPromises)
@@ -88,6 +110,8 @@ export async function getAlias(configUrl?: string, visited = new Set<string>()) 
   }
 
   aliasMap.set(cacheKey, result)
+  if (isCurrentConfig)
+    currentAlias = result
   return result
 }
 
